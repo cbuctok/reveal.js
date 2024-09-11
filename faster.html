@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>FASTER: High-Performance Key-Value Store and Cache</title>
+    <meta name="description" content="A presentation on Microsoft's FASTER library">
+    <meta name="author" content="Your Name">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="dist/reset.css">
+    <link rel="stylesheet" href="dist/reveal.css">
+    <link rel="stylesheet" href="dist/theme/white.css" id="theme">
+    <link rel="stylesheet" href="plugin/highlight/monokai.css">
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section data-markdown>
+                <script type="text/template">
+                    ![Microsoft Research logo](https://raw.githubusercontent.com/microsoft/FASTER/main/docs/assets/images/faster-logo.png)
+                    ### High-Performance Key-Value Store and Cache
+                    - Developed by Microsoft Research
+                    - Concurrent key-value store and cache
+                    - Designed for high throughput and low latency
+                </script>
+            </section>
+
+            <section data-markdown>
+                <script type="text/template">
+                    ## FASTER's Unique Capabilities
+                    ![Hybrid log design](HybridLog.png)
+                    - [Hybrid log design (5.1)](https://www.microsoft.com/en-us/research/uploads/prod/2018/03/faster-sigmod18.pdf)
+                    - Asynchronous non-blocking recovery
+                    - Extensible storage abstraction
+                </script>
+            </section>
+
+            <section data-markdown>
+                <script type="text/template">
+                    ## ConcurrentDictionary?
+
+                    ![Performance graph](small-50reads.png)
+                    - [Higher throughput for in-memory operations](https://github.com/microsoft/FASTER/wiki/Performance-of-FASTER-in-C%23)
+                    - Supports data larger than memory
+                    - Built-in persistence and recovery
+                    - Efficient handling of variable-length data
+                </script>
+            </section>
+
+            <section>
+                <h2>Getting Started with FASTER</h2>
+                <pre><code class="hljs csharp" data-trim data-line-numbers>
+                    using var store = new FasterKV(new FasterKVSettings("path"));
+                    using var session = store.NewSession(new SimpleFunctions());
+
+                    // Read
+                    session.Read(ref key, ref output);
+
+                    // Upsert
+                    session.Upsert(ref key, ref value);
+
+                    // RMW (Read-Modify-Write)
+                    session.RMW(ref key, ref input);
+
+                    // Handle pending operations
+                    session.CompletePending(wait: true);
+                </code></pre>
+            </section>
+
+            <section data-markdown>
+                <script type="text/template">
+                    ## Understanding Publish/Subscribe
+
+                    ![Pub/Sub diagram](pubsub-broker.svg)
+
+                    - Decouples [publishers and subscribers](https://microsoft.github.io/FASTER/docs/remote-pubsub/)
+                    - Improves scalability and flexibility
+                    - Allows for dynamic, event-driven architectures
+                    - Supports one-to-many communication
+                </script>
+            </section>
+
+            <section>
+                <h2>Remote Pub/Sub in FASTER</h2>
+                <pre><code class="hljs csharp" data-trim data-line-numbers>
+                    // Server-side
+                    var kvBroker = new SubscribeKVBroker(new SpanByteKeySerializer(), null, true);
+                    var broker = new SubscribeBroker(new SpanByteKeySerializer(), null, true);
+
+                    // Client-side
+                    // Used for subscribing to a key that is not stored in FasterKV
+                    clientSession.Subscribe(key);
+                    // Used for subscribing to a glob-style pattern that is not stored in FasterKV
+                    clientSession.PSubscribe(pattern);
+                    // Used for subscribing to a key that is stored in FasterKV
+                    clientSession.SubscribeKV(key);
+                    // Used for subscribing to a glob-style pattern that is stored in FasterKV
+                    clientSession.PSubscribe(pattern);
+
+                    // Publishing
+                    // Used for publishing a key and value that is not stored in FasterKV, asynchronously
+                    clientSession.Publish(key, value);
+                    // Used for publishing a key and value and is not stored in FasterKV, synchronously
+                    clientSession.PublishNow(key, value);
+                </code></pre>
+            </section>
+            <section data-markdown>
+                <script type="text/template">
+                ## Conclusion
+                - FASTER is a high-performance key-value store and cache
+                - It supports concurrent operations and asynchronous recovery
+                - FASTER is designed for high throughput and low latency
+                - It is available for C# and C++
+            </script>
+            </section>
+        </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/search/search.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            controls: true,
+            progress: true,
+            center: true,
+            hash: true,
+            plugins: [ RevealZoom, RevealNotes, RevealSearch, RevealMarkdown, RevealHighlight ]
+        });
+    </script>
+</body>
+</html>
